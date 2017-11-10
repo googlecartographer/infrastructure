@@ -379,7 +379,6 @@ func handleRepo(ctx context.Context, client *github.Client, userName string, tea
 	return nil
 }
 
-// RootCmd is a cobra concept and requires a comment to shut up the linter.
 var RootCmd = &cobra.Command{
 	Use:   "wally_the_cartographer",
 	Short: "Auto merge bot for googlecartographer organization.",
@@ -457,7 +456,6 @@ var RootCmd = &cobra.Command{
 	},
 }
 
-// Execute is a Corba concept and requires a comment to shut up the linter.
 func Execute() {
 	if err := RootCmd.Execute(); err != nil {
 		os.Exit(-1)
