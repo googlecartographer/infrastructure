@@ -129,7 +129,7 @@ func RunCommand(workdir string, log io.Writer, args ...string) error {
 	return c.Run()
 }
 
-// CaptureCommand runs a command and returns it output.
+// CaptureCommand runs a command and returns its output.
 func CaptureCommand(workdir string, args ...string) (string, error) {
 	var logOutput bytes.Buffer
 	c := exec.Command(args[0], args[1:]...)
