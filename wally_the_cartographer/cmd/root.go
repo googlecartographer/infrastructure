@@ -346,7 +346,11 @@ func handleRepo(ctx context.Context, client *github.Client, userName string, tea
 			return err
 		}
 
-		for _, comment := range comments[p.NumComments:] {
+		lastNumComments := p.NumComments
+		if lastNumComments > len(comments) {
+			lastNumComments = len(comments)
+		}
+		for _, comment := range comments[lastNumComments:] {
 			if len(mergeRegex.FindString(*comment.Body)) == 0 {
 				continue
 			}
