@@ -147,6 +147,7 @@ func cloneRepository(repo *github.Repository, datadir string, log io.Writer) err
 
 func checkoutBranch(repo *github.Repository, datadir string, log io.Writer, localBranch string) error {
 	fmt.Fprintf(log, "=> Switching to branch %s.\n", localBranch)
+	_ = RunCommand(path.Join(datadir, *repo.Name), log, "git", "rebase", "--abort")
 	if err := RunCommand(path.Join(datadir, *repo.Name), log, "git", "checkout", "-f"); err != nil {
 		return err
 	}
@@ -309,7 +310,7 @@ func handleRepo(ctx context.Context, client *github.Client, userName string, tea
 		done, err := handleWorkItem(ctx, repositoryState.PullRequests[workItem.Pr], client, pullRequest, repo, datadir, logWriter)
 		if err != nil {
 			_ = postCommentToPr(ctx, client, repo, pullRequest.GetNumber(),
-				fmt.Sprintf("Error: %v\n\nLog: %s", err, logOutput.String()))
+				fmt.Sprintf("Error: %v\n\nLog:\n~~~\n%s\n~~~", err, logOutput.String()))
 			return err
 		}
 		if err := WriteState(state, datadir); err != nil {
@@ -317,7 +318,7 @@ func handleRepo(ctx context.Context, client *github.Client, userName string, tea
 		}
 		if !done {
 			// Did some work, but is not done. We have to check again next run of the tool.
-			return nil
+			break
 		}
 		repositoryState.WorkQueue = repositoryState.WorkQueue[1:]
 	}
@@ -328,7 +329,7 @@ func handleRepo(ctx context.Context, client *github.Client, userName string, tea
 		return err
 	}
 
-	mergeRegex, err := regexp.Compile("^@" + userName + ".*merge")
+	mergeRegex, err := regexp.Compile("(?m:^@" + userName + `\s*merge$)`)
 	if err != nil {
 		log.Fatalf("Could not compile regex: %v", err)
 	}
