@@ -423,7 +423,9 @@ func runClangFormat(workdir string, logWriter io.Writer) error {
 		if ext == ".cc" || ext == ".h" {
 			relPath, err := filepath.Rel(workdir, rootPath)
 			if err != nil {
-				log.Panicf("Could not make %s relative to %s. This should be impossible in this context.", rootPath, workdir)
+				log.Panicf(
+					"Could not make %s relative to %s. This should be impossible in this context.",
+					rootPath, workdir)
 			}
 			err = RunCommandSilent(workdir, logWriter, "clang-format", "-i", "-style=Google", relPath)
 			if err != nil {
