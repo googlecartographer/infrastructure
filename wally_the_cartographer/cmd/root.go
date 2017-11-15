@@ -227,7 +227,6 @@ func rebaseOnMaster(repo *github.Repository, datadir string, log io.Writer) erro
 	return RunCommand(path.Join(datadir, *repo.Name), log, "git", "rebase", "master")
 }
 
-
 func postCommentToPr(ctx context.Context, client *github.Client, repo *github.Repository, pr int, comment string) error {
 	log.Printf("Posting comment to %s/%s#%d: %v\n", *repo.Owner.Login, *repo.Name, pr, comment)
 	_, _, err := client.Issues.CreateComment(ctx, *repo.Owner.Login, *repo.Name, pr, &github.IssueComment{
@@ -258,7 +257,7 @@ func handleWorkItem(ctx context.Context, state *PullRequestState, client *github
 
 	if err := RunCommand(path.Join(datadir, *repo.Name), log, "git", "push", "--force", *pullRequest.Head.Repo.Owner.Login,
 		fmt.Sprintf("HEAD:%s", *pullRequest.Head.Ref)); err != nil {
-			return true, err
+		return true, err
 	}
 
 	newSHA, err := getHeadSHA(repo, datadir)
@@ -441,7 +440,7 @@ func runClangFormat(repo *github.Repository, datadir string, logWriter io.Writer
 		return nil
 	})
 	if err != nil {
-		return err;
+		return err
 	}
 	// We ignoring errors in commit, since if the clang-format run did not change
 	// anything, the commit will error.
