@@ -25,7 +25,7 @@ from kubernetes import client, config, watch
 
 def create_config(in_cluster=False):
   if in_cluster:
-    logging.info("Loading in cluster config")
+    logging.info("Loading in-cluster config")
     return config.load_incluster_config()
   else:
     return config.load_kube_config()
