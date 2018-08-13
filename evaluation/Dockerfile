@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# TODO(klose): Change to cartographer project once setup.
 FROM eu.gcr.io/robco-klose/evaluation_base:latest
 
 ARG cartographer_fork=googlecartographer
@@ -43,24 +44,20 @@ RUN rm -rf $HOME/scripts
 
 ENV CARTO_WORKSPACE $HOME/catkin_ws/src
 
-# Hack to overcome ascii encoding problem when running `rosdep install ...`
-# TODO: find a proper solution.
-#RUN sed -i -e 's/ö/oe/g' /opt/ros/${ROS_DISTRO}/share/roslisp/manifest.xml
-
-# install dependencies:
+# Install dependencies:
 RUN $CARTO_WORKSPACE/cartographer_ros/scripts/install_debs.sh && rm -rf /var/lib/apt/lists/*
 
 # Build and install.
-RUN $CARTO_WORKSPACE/cartographer_ros/scripts/install.sh --pkg cartographer_ros_msgs
-RUN $CARTO_WORKSPACE/cartographer_ros/scripts/install.sh --pkg cartographer
-RUN $CARTO_WORKSPACE/cartographer_ros/scripts/install.sh --pkg cartographer_ros
-RUN $CARTO_WORKSPACE/cartographer_ros/scripts/install.sh --pkg cartographer_rviz
+RUN $CARTO_WORKSPACE/cartographer_ros/scripts/install.sh --pkg cartographer_ros_msgs &&
+    $CARTO_WORKSPACE/cartographer_ros/scripts/install.sh --pkg cartographer &&
+    $CARTO_WORKSPACE/cartographer_ros/scripts/install.sh --pkg cartographer_ros &&
+    $CARTO_WORKSPACE/cartographer_ros/scripts/install.sh --pkg cartographer_rviz
 
-# copy the ros_entrypoint.sh
+# Copy the ros_entrypoint.sh
 RUN cp ${CARTO_WORKSPACE}/cartographer_ros/scripts/ros_entrypoint.sh /
 RUN rm -rf $HOME/catkin_ws
 
-# copy evaluation pipeline python code.
+# Copy evaluation pipeline python code.
 COPY evaluation_pipeline/__init__.py $HOME/evaluation_pipeline/__init__.py
 COPY evaluation_pipeline/cloud_storage_helper.py $HOME/evaluation_pipeline/cloud_storage_helper.py
 COPY evaluation_pipeline/big_query_helper.py $HOME/evaluation_pipeline/big_query_helper.py
@@ -70,11 +67,11 @@ COPY evaluation_pipeline/run_evaluation.py $HOME/evaluation_pipeline/run_evaluat
 # Reclaim ownership.
 RUN chown -R evaluation:evaluation .
 
-# scratch dir:
+# Create scratch dir & redirect ROS logging.
 RUN mkdir -p /data/ros_logs
 ENV ROS_LOG_DIR /data/ros_logs
 
-# TODO: try running under evaluation user?
+# TODO(klose): try running under evaluation user?
 #USER evaluation
 ENTRYPOINT /ros_entrypoint.sh \
            python evaluation_pipeline/run_evaluation.py
