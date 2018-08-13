@@ -74,18 +74,18 @@ class EvaluationJob(object):
 
 
 class KubernetesJobCreator(object):
-  """Helper object for creating kubernetes jobs """
+  """Helper object for creating kubernetes jobs."""
 
   def __init__(self, running_in_cluster, namespace="default"):
     self.config = k8s_helper.create_config(running_in_cluster)
-    # service account secret, this has to be already created in the cluster.
+    # Service account secret, this has to be already created in the cluster.
     self.secret_name = "evaluation-secret"
     self.namespace = namespace
     self.k8s_core_api = client.CoreV1Api()
     self.k8s_batch_api = k8s_helper.create_batch_api(self.config)
     self.creation_date = datetime.datetime.now().strftime("%Y-%m-%d")
 
-    # specific for job creation.
+    # Specific for job creation.
     self.job_args = ["python", "evaluation_pipeline/run_evaluation.py"]
 
   def createJob(self, evaluation_job):
@@ -106,7 +106,6 @@ class KubernetesJobCreator(object):
     try:
       response = self.k8s_batch_api.create_namespaced_job(
           self.namespace, k8s_job, pretty="true")
-      #logging.info(response)
     except client.rest.ApiException as e:
       logging.error(
           "Error when calling BatchV1Api.create_namespaced_job(...): %s", e)
@@ -150,7 +149,7 @@ class KubernetesJobCreator(object):
         self.creation_date
     ]
 
-    # optional arguments
+    # Optional arguments.
     if evaluation_job.tags:
       eval_arguments.append("--tags")
       eval_arguments.append(",".join(evaluation_job.tags))
@@ -161,14 +160,14 @@ class KubernetesJobCreator(object):
     return self.job_args + eval_arguments
 
   def _create_resource_requirements(self):
-    # TODO: make these optional columns in the csv?
+    # TODO(klose): Make these optional columns in the csv.
     limits = {"memory": "30Gi", "cpu": "8"}
     requests = {"memory": "12Gi", "cpu": "4"}
     return client.V1ResourceRequirements(limits=limits, requests=requests)
 
 
 def csv_to_evaluation_jobs(csv_filename, docker_img, experiment_id, tags):
-  """loads csv file with list of evaluation jobs and returns [EvaluationJob]
+  """Loads csv file with list of evaluation jobs and returns [EvaluationJob].
 
    The first row of the CSV file is assumed to specify the column names as
   follows:
@@ -207,7 +206,7 @@ def main(argv):
     creator.createJob(job)
     jobs_to_monitor[job.uuid] = job
 
-  # create a watch on all pods of the cluster and find the ones matching the
+  # Create a watch on all pods of the cluster and find the ones matching the
   # newly created jobs.
   w = watch.Watch()
   num_succeeded = 0
