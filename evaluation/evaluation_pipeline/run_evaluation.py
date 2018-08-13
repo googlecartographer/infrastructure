@@ -58,7 +58,7 @@ flags.DEFINE_string(
     'launch file from cartographer_ros to use for assets generation.')
 flags.DEFINE_string('secret', '/var/secrets/evaluation/key.json',
                     'Path to cloud access secret.')
-# Some metainformation to help identifying this job.
+# Metainformation to help identifying this job.
 flags.DEFINE_string('experiment_id', None,
                     'Identifier for the experiment this job is part of.')
 flags.DEFINE_string(
