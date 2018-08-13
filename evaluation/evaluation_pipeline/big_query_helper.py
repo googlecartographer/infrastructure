@@ -71,8 +71,6 @@ def store_in_bigquery(scratch_dir, experiment_id, job_uuid, bag_file,
     r['experiment_id'] = experiment_id
     r['job_uuid'] = job_uuid
     r['datetime'] = creation_date
-    r['platform'] = 'TBD'
-    r['configuration'] = 'TBD'
     r['bag_file'] = bag_file
     if tags:
       r['tags'] = tags
