@@ -23,6 +23,11 @@ from google.cloud import bigquery
 import csv
 
 
+def chunk_rows(rows, chunk_size=1000):
+  for i in range(0, len(rows), chunk_size):
+    yield rows[i:i + chunk_size]
+
+
 class BigQueryHelper(object):
 
   def __init__(self, dataset, secret_json):
@@ -38,13 +43,15 @@ class BigQueryHelper(object):
     table_ref = self._dataset.table(table_name)
     try:
       table = self._client.get_table(table_ref)
-      errors = self._client.insert_rows(table, rows)
-      if errors:
-        for e in errors:
-          logging.error('Failure when inserting row: %s', str(e))
-      else:
-        logging.info('Successfully inserted %d rows into %s', len(rows),
-                     table_name)
+
+      for row_chunk in chunk_rows(rows):
+        errors = self._client.insert_rows(table, row_chunk)
+        if errors:
+          for e in errors:
+            logging.error('Failure when inserting rows: %s', str(e))
+        else:
+          logging.info('Successfully inserted %d rows into %s', len(row_chunk),
+                       table_name)
     except ValueError as e:
       logging.error('Could not insert into requested table %s. Error: %s',
                     table_name, e)
