@@ -41,15 +41,13 @@ class BigQueryHelper(object):
     try:
       table = self._client.get_table(table_ref)
       for i in range(0, len(rows), chunk_size):
-        self._insert_rows(table, rows[i:chunk_size])
+        self._insert_rows(table, rows[i:i + chunk_size])
 
     except ValueError as e:
       logging.error('Could not insert into requested table %s. Error: %s',
                     table_name, e)
 
   def _insert_rows(self, table, rows):
-    if len(rows) < 1:
-      return
     errors = self._client.insert_rows(table, rows)
     if errors:
       for e in errors:
