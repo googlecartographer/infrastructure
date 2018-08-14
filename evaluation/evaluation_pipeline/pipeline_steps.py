@@ -73,10 +73,18 @@ def run_cmd(cmd):
   return '\n'.join(run_cmd.output)
 
 
-def create_pbstream(launch_file, bagfile):
+def create_pbstream(launch_file_pkg,
+                    launch_file,
+                    bagfile,
+                    configuration_file=None):
   logging.info('Generating pbstream for bagfile: %s', bagfile)
   launch_args = ['no_rviz:=true', 'bag_filenames:={}'.format(bagfile)]
-  return roslaunch_helper('cartographer_ros', launch_file, launch_args,
+  if configuration_file:
+    # TODO(klose): update offline node launch file(s) to also take configuration
+    # file and configuration directory as parameters and append them to the
+    # arguments.
+    pass
+  return roslaunch_helper(launch_file_pkg, launch_file, launch_args,
                           'offline_node')
 
 

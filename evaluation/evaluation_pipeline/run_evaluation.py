@@ -52,7 +52,13 @@ flags.DEFINE_string('ground_truth_relations', None,
 flags.DEFINE_string('output_bucket', 'cartographer-evaluation-artifacts',
                     'Cloud storage bucket for output artifacts.')
 flags.DEFINE_string('launch_file', None,
-                    'launch file from cartographer_ros to use.')
+                    'launch file from `flags.launch_file_pkg` to use.')
+flags.DEFINE_string('launch_file_pkg', 'cartographer_ros',
+                    'Package in which we assume the launch file.')
+flags.DEFINE_string(
+    'configuration_file', None,
+    'Optional configuration file to use (e.g. for parameter sweeps). Assumed to be in cloud storage.'
+)
 flags.DEFINE_string(
     'assets_launch_file', None,
     'launch file from cartographer_ros to use for assets generation.')
@@ -88,17 +94,21 @@ def main(argv):
     os.makedirs(scratch_dir)
 
   destination = '{}/{}'.format(scratch_dir, bag_file)
-  dataset_bucket, dataset_path_in_bucket = path_to_blob(FLAGS.dataset_path)
-  if dataset_bucket == None:
-    logging.error('Invalid dataset path "%s"', FLAGS.dataset_path)
-  if not download_from_cloud_storage(FLAGS.secret, dataset_bucket,
-                                     dataset_path_in_bucket, destination):
-    logging.error('Could not download dataset')
-    return
-  logging.info('Successfully downloaded dataset %s to %s', bag_file,
-               scratch_dir)
 
-  pipeline_steps.create_pbstream(FLAGS.launch_file, destination)
+  if not download_from_cloud_storage_url(FLAGS.dataset_path, destination,
+                                         FLAGS.secret):
+    return
+
+  config_dst = '{}/{}'.format(scratch_dir, 'config.lua')
+  if FLAGS.configuration_file:
+    if not download_from_cloud_storage_url(FLAGS.configuration_file, config_dst,
+                                           FLAGS.secret):
+      return
+  else:
+    config_dst = None
+
+  pipeline_steps.create_pbstream(FLAGS.launch_file_pkg, FLAGS.launch_file,
+                                 destination, config_dst)
   pipeline_steps.copy_logs('offline_node',
                            '{}/offline_node.log'.format(scratch_dir))
   logging.info('pbstream successfully created!')
@@ -114,10 +124,8 @@ def main(argv):
     logging.info('Getting ground truth relations file: %s',
                  FLAGS.ground_truth_relations)
     relations_file = '{}/ground_truth_relations.pbstream'.format(scratch_dir)
-    ground_truth_bucket, ground_truth_map_file = path_to_blob(
-        FLAGS.ground_truth_relations)
-    if not download_from_cloud_storage(FLAGS.secret, ground_truth_bucket,
-                                       ground_truth_map_file, relations_file):
+    if not download_from_cloud_storage_url(FLAGS.ground_truth_relations,
+                                           relations_file, FLAGS.secret):
       logging.error('Could not download ground truth relations file.')
       return
 

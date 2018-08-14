@@ -51,11 +51,18 @@ flags.DEFINE_list("tags", None, "Tags to add to this experiment")
 flags.DEFINE_bool(
     "running_in_cluster", False,
     "Set to true, if this script is executed within a kubernetes cluster")
-
 flags.DEFINE_string(
     "service_secret", None,
     "Path to service account secret. If set, this will be used to auth with GCLOUD."
 )
+flags.DEFINE_string(
+    "parameter_sweep_file", None,
+    """Optional path to file, containing one parameter sweep per line in the
+    form: parameter_name value_1 value_2 value_n""")
+flags.DEFINE_string(
+    "parameter_sweep_base_config", None,
+    """If running with parameter sweeping, use this configuration file to base
+    the generated config file on.""")
 
 
 class EvaluationJob(object):
