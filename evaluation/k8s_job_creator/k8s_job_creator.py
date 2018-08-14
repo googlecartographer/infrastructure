@@ -28,6 +28,7 @@ from absl import flags
 from kubernetes import client, config, watch
 
 import k8s_helper
+import configuration_generator as cfg_gen
 import uuid
 import time
 import datetime
@@ -61,8 +62,8 @@ flags.DEFINE_string(
     form: parameter_name value_1 value_2 value_n""")
 flags.DEFINE_string(
     "parameter_sweep_base_config", None,
-    """If running with parameter sweeping, use this configuration file to base
-    the generated config file on.""")
+    """If running with parameter sweeping, use this configuration Lua file to
+    base the generated config file on.""")
 
 
 class EvaluationJob(object):
@@ -78,6 +79,7 @@ class EvaluationJob(object):
     self.assets_launch_file = assets_launch_file
     self.ground_truth_file = ground_truth_file
     self.uuid = str(uuid.uuid1())
+    self.sweep_index = 0
 
 
 class KubernetesJobCreator(object):
@@ -94,6 +96,39 @@ class KubernetesJobCreator(object):
 
     # Specific for job creation.
     self.job_args = ["python", "evaluation_pipeline/run_evaluation.py"]
+
+  def create_jobs(self, evaluation_jobs):
+    jobs_to_monitor = {}
+    for job in evaluation_jobs:
+      logging.info("Creating evaluation job: %s", job.uuid)
+      self.createJob(job)
+      jobs_to_monitor[job.uuid] = job
+    return jobs_to_monitor
+
+  def create_jobs(self, evaluation_jobs, parameter_sweep_file,
+                  base_config_file):
+    sweep_idx = 0
+    experiment_id = evaluation_jobs[0].experiment_id
+    base_config_lines = cfg_gen.load_base_config_file(base_config_file)
+    jobs_to_monitor = {}
+
+    for cfg_dict in cfg_gen.sweep_parameters(parameter_sweep_file):
+      config_local = "/tmp/config.lua"
+      cfg_gen.write_config_file(base_config_lines, cfg_dict, config_local)
+
+      cloud_cfg_path = "gs://cartographer-evaluation-artifacts/{}/config_{}.lua".format(
+          experiment_id, sweep_idx)
+
+      # TODO(klose): Upload to cloud storage.
+
+      for job in evaluation_jobs:
+        job.uuid = str(uuid.uuid1())
+        job.sweep_index = sweep_idx
+        logging.info("Creating evaluation job: %s", job.uuid)
+        self.createJob(job, cloud_cfg_path)
+        jobs_to_monitor[job.uuid] = job
+      sweep_idx += 1
+    return jobs_to_monitor
 
   def createJob(self, evaluation_job):
     job = client.V1Job(
@@ -207,11 +242,7 @@ def main(argv):
 
   creator = KubernetesJobCreator(FLAGS.running_in_cluster)
   v1_api = creator.k8s_core_api
-  jobs_to_monitor = {}
-  for job in evaluation_jobs:
-    logging.info("Creating evaluation job: %s", job.uuid)
-    creator.createJob(job)
-    jobs_to_monitor[job.uuid] = job
+  jobs_to_monitor = creator.create_jobs(evaluation_jobs)
 
   # Create a watch on all pods of the cluster and find the ones matching the
   # newly created jobs.

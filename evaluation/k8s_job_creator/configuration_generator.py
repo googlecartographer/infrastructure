@@ -12,6 +12,7 @@ from absl import logging
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string('sweep_file', None, 'parameter sweel file')
+flags.DEFINE_string('cfg_base', None, 'Configuration basefile')
 
 
 def load_sweep_file(filename):
@@ -20,6 +21,19 @@ def load_sweep_file(filename):
       items = line.split(' ')
       if len(items) > 1:
         yield items
+
+
+def load_base_config_file(filename):
+  with open(filename, 'r') as cfg_file:
+    return [l for l in cfg_file.readlines() if not 'return options' in l]
+
+
+def write_config_file(base, swept_cfgs, output_file):
+  with open(output_file, 'wt') as out:
+    out.writelines(base)
+    for param, value in swept_cfgs.iteritems():
+      out.write('{} = {}\n'.format(param, value))
+    out.write('return options\n')
 
 
 class ParameterSweep:
@@ -40,7 +54,7 @@ class ParameterSweep:
     return self._values[index]
 
 
-def sweep_parameters(sweep_file_name, base_config_file):
+def sweep_parameters(sweep_file_name):
   """ Sweeps through all parameter combinations.
 
   Yields a dictionary with <parameter_name : current_value> items in each
@@ -75,10 +89,13 @@ def main(argv):
     raise app.UsageError('Too many command-line arguments.')
 
   if FLAGS.sweep_file:
-    for parameter_dict in generate_configurations(FLAGS.sweep_file, 'blaaa'):
+    for parameter_dict in generate_configurations(FLAGS.sweep_file):
       logging.info('Current sweep')
       for k, v in parameter_dict.iteritems():
         logging.info('%s   -->   %s', k, v)
+  if FLAGS.cfg_base:
+    for r in load_base_config_file(FLAGS.cfg_base):
+      logging.info(r)
 
 
 if __name__ == '__main__':

@@ -80,10 +80,10 @@ def create_pbstream(launch_file_pkg,
   logging.info('Generating pbstream for bagfile: %s', bagfile)
   launch_args = ['no_rviz:=true', 'bag_filenames:={}'.format(bagfile)]
   if configuration_file:
-    # TODO(klose): update offline node launch file(s) to also take configuration
-    # file and configuration directory as parameters and append them to the
-    # arguments.
-    pass
+    cfg_file = os.path.basename(configuration_file)
+    cfg_dir = os.path.dirname(configuration_file)
+    launch_args.append('configuration_directory:={}'.format(cfg_dir))
+    launch_args.append('configuration_basenames:={}'.format(cfg_file))
   return roslaunch_helper(launch_file_pkg, launch_file, launch_args,
                           'offline_node')
 
