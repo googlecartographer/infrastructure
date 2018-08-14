@@ -48,6 +48,8 @@ class BigQueryHelper(object):
                     table_name, e)
 
   def _insert_rows(self, table, rows):
+    if len(rows) < 1:
+      return
     errors = self._client.insert_rows(table, rows)
     if errors:
       for e in errors:
