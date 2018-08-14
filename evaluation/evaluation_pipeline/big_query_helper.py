@@ -47,11 +47,11 @@ class BigQueryHelper(object):
       logging.error('Could not insert into requested table %s. Error: %s',
                     table_name, e)
 
-    def _insert_rows(self, table, rows):
-      errors = self._client.insert_rows(table, rows)
-      if errors:
-        for e in errors:
-          logging.error('Failure when inserting rows: %s', str(e))
+  def _insert_rows(self, table, rows):
+    errors = self._client.insert_rows(table, rows)
+    if errors:
+      for e in errors:
+        logging.error('Failure when inserting rows: %s', str(e))
 
 
 def store_in_bigquery(scratch_dir, experiment_id, job_uuid, bag_file,
