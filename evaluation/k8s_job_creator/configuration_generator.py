@@ -1,7 +1,7 @@
-"""TODO(klose): DO NOT SUBMIT without one-line documentation for configuration_generator.
+""" Functions for generating configuration files from parameter sweeps.
 
-TODO(klose): DO NOT SUBMIT without a detailed description of
-configuration_generator.
+Set of helper functions to generate Lua configuration files for cartographer,
+for parameter sweeps.
 """
 
 from __future__ import absolute_import
@@ -39,7 +39,6 @@ def write_config_file(base, swept_cfgs, output_file):
 class ParameterSweep:
   """ Represents a sweep for a single parameter.
   """
-
   def __init__(self, parameter_with_values):
     self._param_name = parameter_with_values[0].strip()
     self._values = [v.strip() for v in parameter_with_values[1:]]
