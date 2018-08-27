@@ -1,5 +1,7 @@
-""" Helper to generate a lua configuration for parameter sweeps.
+""" Functions for generating configuration files from parameter sweeps.
 
+Set of helper functions to generate Lua configuration files for cartographer,
+for parameter sweeps.
 """
 
 from __future__ import absolute_import
