@@ -9,10 +9,25 @@ from __future__ import absolute_import
 from absl import app
 from absl import flags
 from absl import logging
+from google.cloud import storage
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string('sweep_file', None, 'parameter sweel file')
+flags.DEFINE_string('sweep_file', None, 'parameter sweep file')
 flags.DEFINE_string('cfg_base', None, 'Configuration basefile')
+
+
+def upload_to_cloud_bucket(src_file, destination_bucket, destination,
+                           secret_json):
+  client = storage.Client.from_service_account_json(secret_json)
+  try:
+    bucket = client.bucket(destination_bucket)
+    logging.info('Uploading %s files', src_file)
+    blob = bucket.blob(destination)
+    blob.upload_from_filename(src_file)
+  except google.cloud.exceptions.NotFound:
+    logging.error('Cloud bucket not found: %s.', bucket_name)
+    return False
+  return True
 
 
 def load_sweep_file(filename):

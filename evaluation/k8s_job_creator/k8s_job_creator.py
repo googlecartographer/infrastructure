@@ -85,7 +85,10 @@ class EvaluationJob(object):
 class KubernetesJobCreator(object):
   """Helper object for creating kubernetes jobs."""
 
-  def __init__(self, running_in_cluster, namespace="default"):
+  def __init__(self,
+               running_in_cluster,
+               namespace="default",
+               service_account_secret=None):
     self.config = k8s_helper.create_config(running_in_cluster)
     # Service account secret, this has to be already created in the cluster.
     self.secret_name = "evaluation-secret"
@@ -93,6 +96,7 @@ class KubernetesJobCreator(object):
     self.k8s_core_api = client.CoreV1Api()
     self.k8s_batch_api = k8s_helper.create_batch_api(self.config)
     self.creation_date = datetime.datetime.now().strftime("%Y-%m-%d")
+    self.service_account_secret = service_account_secret
 
     # Specific for job creation.
     self.job_args = ["python", "evaluation_pipeline/run_evaluation.py"]
@@ -116,11 +120,11 @@ class KubernetesJobCreator(object):
       config_local = "/tmp/config.lua"
       cfg_gen.write_config_file(base_config_lines, cfg_dict, config_local)
 
-      cloud_cfg_path = "gs://cartographer-evaluation-artifacts/{}/config_{}.lua".format(
-          experiment_id, sweep_idx)
-
-      # TODO(klose): Upload to cloud storage.
-      logging.error("TODO(klose): upload file to cloud storage location")
+      dst_bucket = "cartographer-evaluation-artifacts"
+      dst_path = "{}/config_{}.lua".format(experiment_id, sweep_idx)
+      cfg_gen.upload_to_cloud_bucket(config_local, dst_bucket, dst_path,
+                                     self.service_account_secret)
+      cloud_cfg_path = "gs://{}/{}".format(dst_bucket, dst_path)
 
       for job in evaluation_jobs:
         # regenerate uuid.
@@ -128,7 +132,7 @@ class KubernetesJobCreator(object):
         job.sweep_index = sweep_idx
         job.lua_configuration = cloud_cfg_path
         logging.info("Creating evaluation job: %s", job.uuid)
-        self.createJob(job, cloud_cfg_path)
+        self.createJob(job)
 
         jobs_to_monitor[job.uuid] = job
       sweep_idx += 1
@@ -202,6 +206,9 @@ class KubernetesJobCreator(object):
     if evaluation_job.ground_truth_file:
       eval_arguments.append("--ground_truth_relations")
       eval_arguments.append(evaluation_job.ground_truth_file)
+    if evaluation_job.lua_configuration:
+      eval_arguments.append("--configuration_file")
+      eval_arguments.append(evaluation_job.lua_configuration)
 
     return self.job_args + eval_arguments
 
@@ -244,16 +251,15 @@ def main(argv):
   evaluation_jobs = csv_to_evaluation_jobs(FLAGS.dataset_list, docker_image,
                                            experiment_id, FLAGS.tags)
 
-  creator = KubernetesJobCreator(FLAGS.running_in_cluster)
-  v1_api = creator.k8s_core_api
+  creator = KubernetesJobCreator(
+      FLAGS.running_in_cluster,
+      service_account_secret=FLAGS.service_account_secret)
 
   jobs_to_monitor = {}
-
   if FLAGS.sweep_file:
-    if not FLAGS.parameter_sweep_base_config:
-      logging.error(
-          "You have to specify a base configuration to perform parameter sweeps"
-      )
+    if not FLAGS.parameter_sweep_base_config or not FLAGS.service_account_secret:
+      logging.error("""You have to specify a base configuration and a
+          service_account_secret for parameter sweeps.""")
       return
     jobs_to_monitor = creator.create_jobs(evaluation_jobs,
                                           FLAGS.parameter_sweep_file,
@@ -263,6 +269,7 @@ def main(argv):
 
   # Create a watch on all pods of the cluster and find the ones matching the
   # newly created jobs.
+  v1_api = creator.k8s_core_api
   w = watch.Watch()
   num_succeeded = 0
   num_failed = 0

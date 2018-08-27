@@ -57,8 +57,8 @@ flags.DEFINE_string('launch_file_pkg', 'cartographer_ros',
                     'Package in which we assume the launch file.')
 flags.DEFINE_string(
     'configuration_file', None,
-    'Optional configuration file to use (e.g. for parameter sweeps). Assumed to be in cloud storage.'
-)
+    """Optional configuration file to use (e.g. for parameter sweeps). Assumed
+    to be a cloud storage path.""")
 flags.DEFINE_string(
     'assets_launch_file', None,
     'launch file from cartographer_ros to use for assets generation.')
@@ -69,8 +69,8 @@ flags.DEFINE_string('experiment_id', None,
                     'Identifier for the experiment this job is part of.')
 flags.DEFINE_string(
     'uuid', None,
-    'unique identifier for this evaluation run (will be used as result artifacts directory.'
-)
+    """Unique identifier for this evaluation run (will be used as result
+    artifacts directory.""")
 flags.DEFINE_string('creation_date', None,
                     'Date on which this job was created (YYYY-MM-DD)')
 flags.DEFINE_list(
@@ -99,13 +99,12 @@ def main(argv):
                                          FLAGS.secret):
     return
 
-  config_dst = '{}/{}'.format(scratch_dir, 'config.lua')
+  config_dst = None
   if FLAGS.configuration_file:
+    config_dst = '{}/{}'.format(scratch_dir, 'config.lua')
     if not download_from_cloud_storage_url(FLAGS.configuration_file, config_dst,
                                            FLAGS.secret):
       return
-  else:
-    config_dst = None
 
   pipeline_steps.create_pbstream(FLAGS.launch_file_pkg, FLAGS.launch_file,
                                  destination, config_dst)
