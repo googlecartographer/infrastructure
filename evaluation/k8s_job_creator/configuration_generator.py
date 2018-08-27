@@ -1,7 +1,5 @@
-"""TODO(klose): DO NOT SUBMIT without one-line documentation for configuration_generator.
+""" Helper to generate a lua configuration for parameter sweeps.
 
-TODO(klose): DO NOT SUBMIT without a detailed description of
-configuration_generator.
 """
 
 from __future__ import absolute_import
@@ -24,11 +22,19 @@ def load_sweep_file(filename):
 
 
 def load_base_config_file(filename):
+  """ Loads file into list of lines, removing the "return options" line.
+  """
   with open(filename, 'r') as cfg_file:
     return [l for l in cfg_file.readlines() if not 'return options' in l]
 
 
 def write_config_file(base, swept_cfgs, output_file):
+  """ Writes a lua configuration file.
+
+  First writes the base configuration lines and then the parameter overrides
+  specified in the swept_cfgs dictionary, which maps parameter names to
+  parameter values.
+  """
   with open(output_file, 'wt') as out:
     out.writelines(base)
     for param, value in swept_cfgs.iteritems():
