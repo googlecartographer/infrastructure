@@ -27,6 +27,7 @@ import os
 def download_from_cloud_storage(secret_json, bucket_name, file_path,
                                 destination_path):
   """Downloads the the file from cloud storage to local file system.
+
   """
   client = storage.Client.from_service_account_json(secret_json)
   try:
