@@ -44,7 +44,7 @@ flags.DEFINE_string(
     "docker_image", None,
     "Name or id of the docker image which shall be used as container image for these jobs."
 )
-flags.DEFINE_list(
+flags.DEFINE_string(
     "experiment_id", None,
     "Identifier for this group of evaluations. If not set, a uuid will be generated."
 )
@@ -131,7 +131,6 @@ class KubernetesJobCreator(object):
         job.uuid = str(uuid.uuid1())
         job.sweep_index = sweep_idx
         job.lua_configuration = cloud_cfg_path
-        logging.info("Creating evaluation job: %s", job.uuid)
         self.createJob(job)
 
         jobs_to_monitor[job.uuid] = job
@@ -139,6 +138,8 @@ class KubernetesJobCreator(object):
     return jobs_to_monitor
 
   def createJob(self, evaluation_job):
+    logging.info("Creating evaluation job: %s for experiment: %s",
+                 evaluation_job.uuid, evaluation_job.experiment_id)
     job = client.V1Job(
         api_version="batch/v1",
         kind="Job",
@@ -252,12 +253,11 @@ def main(argv):
                                            experiment_id, FLAGS.tags)
 
   creator = KubernetesJobCreator(
-      FLAGS.running_in_cluster,
-      service_account_secret=FLAGS.service_account_secret)
+      FLAGS.running_in_cluster, service_account_secret=FLAGS.service_secret)
 
   jobs_to_monitor = {}
-  if FLAGS.sweep_file:
-    if not FLAGS.parameter_sweep_base_config or not FLAGS.service_account_secret:
+  if FLAGS.parameter_sweep_file:
+    if not FLAGS.parameter_sweep_base_config or not FLAGS.service_secret:
       logging.error("""You have to specify a base configuration and a
           service_account_secret for parameter sweeps.""")
       return
