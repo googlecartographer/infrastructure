@@ -34,7 +34,7 @@ from absl import flags
 from absl import logging
 from time import sleep
 
-from cloud_storage_helper import download_from_cloud_storage
+from cloud_storage_helper import download_from_cloud_storage_url
 from cloud_storage_helper import path_to_blob
 from cloud_storage_helper import upload_artifacts
 from big_query_helper import store_in_bigquery
@@ -135,7 +135,9 @@ def main(argv):
     store_in_bigquery(scratch_dir, FLAGS.experiment_id, FLAGS.uuid, bag_file,
                       FLAGS.secret, FLAGS.creation_date, FLAGS.tags)
 
-  upload_artifacts(scratch_dir, FLAGS.output_bucket, FLAGS.uuid, FLAGS.secret)
+  destination_path = '{}/{}'.format(FLAGS.experiment_id, FLAGS.uuid)
+  upload_artifacts(scratch_dir, FLAGS.output_bucket, destination_path,
+                   FLAGS.secret)
 
 
 if __name__ == '__main__':
