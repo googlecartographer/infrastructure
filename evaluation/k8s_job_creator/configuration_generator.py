@@ -83,8 +83,7 @@ class ParameterSweep:
 def sweep_parameters(sweep_file_name):
   """ Sweeps through all parameter combinations.
 
-  Yields a dictionary with <name : current_value> items in each
-  iteration.
+  Yields a dictionary with <name : value> items in each iteration.
   """
   parameter_sweep = [
       ParameterSweep(x) for x in load_sweep_file(sweep_file_name)
