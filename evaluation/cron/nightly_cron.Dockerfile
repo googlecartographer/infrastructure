@@ -26,6 +26,11 @@ RUN apt-get update && \
 ENV CLOUDSDK_CORE_DISABLE_PROMPTS 1
 ENV PATH /opt/google-cloud-sdk/bin:$PATH
 
+# Cluster information:
+ENV CLUSTER carto-evaluation
+ENV CLUSTER_ZONE us-west1-a
+
+
 # Install Google Cloud Components
 RUN curl https://sdk.cloud.google.com | bash && \
     mv /root/google-cloud-sdk /opt && \
@@ -35,6 +40,7 @@ RUN curl https://sdk.cloud.google.com | bash && \
     pip install --upgrade kubernetes && \
     pip install --upgrade google-cloud-bigquery && \
     pip install --upgrade google-cloud-storage
+RUN gcloud config set project robco-klose
 
 WORKDIR /
 
@@ -42,8 +48,9 @@ WORKDIR /
 COPY evaluation_pipeline /infrastructure/evaluation/evaluation_pipeline
 COPY k8s_job_creator /infrastructure/evaluation/k8s_job_creator
 COPY dataset_lists /infrastructure/evaluation/dataset_lists
-COPY cloud_build.yaml /infrastructure/evaluation/cloud_build.yaml
+COPY scripts /infrastructure/evaluation/scripts
 COPY Dockerfile /infrastructure/evaluation/Dockerfile
-COPY nightly_tasks.sh /infrastructure/evaluation/nightly_tasks.sh
+COPY cron/cloud_build.yaml /infrastructure/evaluation/cloud_build.yaml
+COPY cron/nightly_tasks.sh /infrastructure/evaluation/nightly_tasks.sh
 
 ENTRYPOINT /infrastructure/evaluation/nightly_tasks.sh
