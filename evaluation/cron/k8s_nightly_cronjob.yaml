@@ -3,7 +3,7 @@ kind: CronJob
 metadata:
   name: nightly-evaluation
 spec:
-  schedule: "39 * * * *"
+  schedule: "00 18 * * *"
   jobTemplate:
     spec:
       template:
