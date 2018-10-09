@@ -1,4 +1,6 @@
 # Kubernetes based Evaluation Pipeline
+This folder contains files needed to setup a kubernetes based evaluation
+pipeleline on GCP.
 
 ## Source tree overview
 
