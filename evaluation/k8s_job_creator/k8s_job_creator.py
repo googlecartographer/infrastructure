@@ -273,7 +273,6 @@ def main(argv):
   w = watch.Watch()
   num_succeeded = 0
   num_failed = 0
-  waiting_for_finish = len(jobs_to_monitor)
   for e in w.stream(v1_api.list_namespaced_pod, "default"):
     pod = e["object"]
     event_type = e["type"]
@@ -284,12 +283,12 @@ def main(argv):
                        event_type, pod.status.phase)
           if pod.status.phase == "Succeeded":
             num_succeeded += 1
-            waiting_for_finish -= 1
+            jobs_to_monitor.pop(c.name)
           elif pod.status.phase == "Failed":
             num_failed += 1
-            waiting_for_finish -= 1
-          logging.info("Waiting for %d jobs to finish", waiting_for_finish)
-    if waiting_for_finish <= 0:
+            jobs_to_monitor.pop(c.name)
+          logging.info("Waiting for %d jobs to finish", len(jobs_to_monitor))
+    if len(jobs_to_monitor) <= 0:
       break
 
 
