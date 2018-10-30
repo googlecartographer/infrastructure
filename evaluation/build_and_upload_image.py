@@ -39,9 +39,7 @@ flags.DEFINE_string("cartographer_ros_branch", "master",
                     "cartographer_ros branch (in fork) to use.")
 flags.DEFINE_string("docker_registry", "eu.gcr.io/cartographer-141408",
                     "Url of docker registry to pull the docker image from.")
-flags.DEFINE_string(
-    "tag", None,
-    "Tag for the docker image which shall be used as container image.")
+flags.DEFINE_string("tag", None, "Tag for the docker image.")
 flags.DEFINE_string("dockerfile_path", None,
                     "Path to directory containing the Dockerfile.")
 flags.DEFINE_bool("verbose", False, "Verbose log output.")
